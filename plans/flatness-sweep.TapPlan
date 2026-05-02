@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestPlan type="OpenTap.TestPlan">
+  <Steps>
+    <TestStep type="VirtualVxg.OpenTapPlugin.PowerFlatnessSweep" Id="7f0db866-6a5b-47d5-8334-598dbc2bfc9e">
+      <Instrument>
+        <Host>127.0.0.1</Host>
+        <Port>5025</Port>
+        <Name>INST</Name>
+      </Instrument>
+      <StartFreqHz>1000000000</StartFreqHz>
+      <StopFreqHz>6000000000</StopFreqHz>
+      <StepFreqHz>500000000</StepFreqHz>
+      <NominalPowerDbm>0</NominalPowerDbm>
+      <ToleranceDb>0.5</ToleranceDb>
+      <UnitId>demo-unit</UnitId>
+      <Name Metadata="Step Name">Power Flatness Sweep</Name>
+      <ChildTestSteps />
+    </TestStep>
+  </Steps>
+</TestPlan>
