@@ -3,7 +3,7 @@
 A simulated Keysight M9484C VXG signal generator with an OpenTAP plugin running
 an Output Power Flatness sweep, streaming results to a live Grafana dashboard.
 
-**Live dashboard:** _populated after deploy (Task 23)_
+**Live dashboard:** _deploy pending — run `make deploy` to publish_
 
 ## Architecture
 
