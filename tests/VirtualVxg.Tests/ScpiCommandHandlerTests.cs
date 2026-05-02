@@ -25,4 +25,13 @@ public class ScpiCommandHandlerTests
         var reply = handler.Handle("FREQ?");
         Assert.Equal("2400000000", reply);
     }
+
+    [Fact]
+    public void Pow_SetThenQuery_RoundTripsExactValue()
+    {
+        var handler = MakeHandler();
+        handler.Handle("POW -10.5");
+        var reply = handler.Handle("POW?");
+        Assert.Equal("-10.5", reply);
+    }
 }

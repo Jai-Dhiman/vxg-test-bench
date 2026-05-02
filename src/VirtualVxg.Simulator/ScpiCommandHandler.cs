@@ -29,6 +29,8 @@ public sealed class ScpiCommandHandler
             "*IDN?" => IdnReply,
             "FREQ" => SetFrequency(arg),
             "FREQ?" => _state.FrequencyHz.ToString("F0", CultureInfo.InvariantCulture),
+            "POW" => SetPower(arg),
+            "POW?" => _state.PowerDbm.ToString("0.0##", CultureInfo.InvariantCulture),
             _ => "-100,\"Command error\""
         };
     }
@@ -38,6 +40,14 @@ public sealed class ScpiCommandHandler
         if (!double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out var hz))
             return "-100,\"Command error\"";
         _state.FrequencyHz = hz;
+        return null;
+    }
+
+    private string? SetPower(string arg)
+    {
+        if (!double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out var dbm))
+            return "-100,\"Command error\"";
+        _state.PowerDbm = dbm;
         return null;
     }
 }
