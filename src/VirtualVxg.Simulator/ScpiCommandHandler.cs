@@ -20,11 +20,24 @@ public sealed class ScpiCommandHandler
         var trimmed = commandLine.Trim();
         if (trimmed.Length == 0) return null;
 
-        var verb = trimmed.Split(' ', 2)[0].ToUpperInvariant();
+        var parts = trimmed.Split(' ', 2);
+        var verb = parts[0].ToUpperInvariant();
+        var arg = parts.Length > 1 ? parts[1] : "";
+
         return verb switch
         {
             "*IDN?" => IdnReply,
+            "FREQ" => SetFrequency(arg),
+            "FREQ?" => _state.FrequencyHz.ToString("F0", CultureInfo.InvariantCulture),
             _ => "-100,\"Command error\""
         };
+    }
+
+    private string? SetFrequency(string arg)
+    {
+        if (!double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out var hz))
+            return "-100,\"Command error\"";
+        _state.FrequencyHz = hz;
+        return null;
     }
 }

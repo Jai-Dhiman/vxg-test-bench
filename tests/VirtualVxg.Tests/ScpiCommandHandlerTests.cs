@@ -16,4 +16,13 @@ public class ScpiCommandHandlerTests
         var reply = handler.Handle("*IDN?");
         Assert.Equal("Keysight Technologies,M9484C,SIM-0001,VirtualVxg-0.1.0", reply);
     }
+
+    [Fact]
+    public void Freq_SetThenQuery_RoundTripsExactValue()
+    {
+        var handler = MakeHandler();
+        handler.Handle("FREQ 2.4e9");
+        var reply = handler.Handle("FREQ?");
+        Assert.Equal("2400000000", reply);
+    }
 }
