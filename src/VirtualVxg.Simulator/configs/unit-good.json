@@ -1,0 +1,7 @@
+{
+  "unit_id": "VXG-GOOD-001",
+  "seed": 42,
+  "noise_floor_db": 0.05,
+  "rolloff_db_per_ghz_above_ghz": null,
+  "spurs": []
+}
