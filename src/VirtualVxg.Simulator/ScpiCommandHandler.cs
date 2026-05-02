@@ -56,13 +56,19 @@ public sealed class ScpiCommandHandler
     private string? SetOutput(string arg)
     {
         var v = arg.Trim().ToUpperInvariant();
-        _state.OutputOn = v switch
+        switch (v)
         {
-            "ON" or "1" => true,
-            "OFF" or "0" => false,
-            _ => throw new FormatException($"Invalid OUTP argument: {arg}")
-        };
-        return null;
+            case "ON":
+            case "1":
+                _state.OutputOn = true;
+                return null;
+            case "OFF":
+            case "0":
+                _state.OutputOn = false;
+                return null;
+            default:
+                return "-100,\"Command error\"";
+        }
     }
 
     private string MeasurePower()

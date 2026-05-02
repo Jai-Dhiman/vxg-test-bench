@@ -36,22 +36,15 @@ public class PowerFlatnessSweep : TestStep
             passColumn.Add(pass);
         }
 
-        try
-        {
-            Results?.PublishTable("PowerFlatness",
-                new List<string> { "unit_id", "frequency_hz", "power_dbm", "pass" },
-                new Array[]
-                {
-                    Enumerable.Repeat(UnitId, freqColumn.Count).ToArray(),
-                    freqColumn.ToArray(),
-                    powerColumn.ToArray(),
-                    passColumn.ToArray()
-                });
-        }
-        catch (Exception)
-        {
-            // Results is null in unit test context (no TestPlanRun); not a failure condition
-        }
+        Results?.PublishTable("PowerFlatness",
+            new List<string> { "unit_id", "frequency_hz", "power_dbm", "pass" },
+            new Array[]
+            {
+                Enumerable.Repeat(UnitId, freqColumn.Count).ToArray(),
+                freqColumn.ToArray(),
+                powerColumn.ToArray(),
+                passColumn.ToArray()
+            });
 
         FailedPointCount = failed;
         LastVerdict = failed == 0 ? Verdict.Pass : Verdict.Fail;

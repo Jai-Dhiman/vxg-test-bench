@@ -66,6 +66,14 @@ public class ScpiCommandHandlerTests
     }
 
     [Fact]
+    public void OutpInvalidArg_ReturnsScpiCommandError()
+    {
+        var handler = MakeHandler();
+        var reply = handler.Handle("OUTP BLAH");
+        Assert.Equal("-100,\"Command error\"", reply);
+    }
+
+    [Fact]
     public void EmptyLine_ReturnsNullNoReply()
     {
         var handler = MakeHandler();
