@@ -1,0 +1,32 @@
+{
+  "title": "VXG Power Flatness",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "Power vs Frequency",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "targets": [{
+        "refId": "A",
+        "query": "from(bucket: \"vxg_tests\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")"
+      }]
+    },
+    {
+      "id": 2, "type": "table", "title": "Per-Unit Pass/Fail",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [{
+        "refId": "A",
+        "query": "from(bucket: \"vxg_tests\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\") |> group(columns: [\"unit_id\"]) |> count()"
+      }]
+    },
+    {
+      "id": 3, "type": "table", "title": "Run History",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [{
+        "refId": "A",
+        "query": "from(bucket: \"vxg_tests\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\") |> keep(columns: [\"_time\", \"unit_id\", \"_field\", \"_value\"]) |> tail(n: 50)"
+      }]
+    }
+  ]
+}
