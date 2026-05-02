@@ -14,6 +14,16 @@ public sealed class DefectEngine
     public double MeasurePowerAt(double frequencyHz, double requestedDbm)
     {
         var noise = (_rng.NextDouble() - 0.5) * 2.0 * _config.NoiseFloorDb;
-        return requestedDbm + noise;
+        var rolloff = ComputeRolloff(frequencyHz);
+        return requestedDbm + noise + rolloff;
+    }
+
+    private double ComputeRolloff(double frequencyHz)
+    {
+        if (_config.RolloffDbPerGhzAbove is null) return 0.0;
+        var freqGhz = frequencyHz / 1e9;
+        var excess = freqGhz - _config.RolloffDbPerGhzAbove.KneeGhz;
+        if (excess <= 0) return 0.0;
+        return excess * _config.RolloffDbPerGhzAbove.SlopeDbPerGhz;
     }
 }
