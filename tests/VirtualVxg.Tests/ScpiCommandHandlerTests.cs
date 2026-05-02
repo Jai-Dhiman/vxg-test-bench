@@ -56,4 +56,20 @@ public class ScpiCommandHandlerTests
         var reply = handler.Handle("MEAS:POW?");
         Assert.Equal("-200.0", reply);
     }
+
+    [Fact]
+    public void UnknownVerb_ReturnsScpiCommandError()
+    {
+        var handler = MakeHandler();
+        var reply = handler.Handle("FOOBAR 123");
+        Assert.Equal("-100,\"Command error\"", reply);
+    }
+
+    [Fact]
+    public void EmptyLine_ReturnsNullNoReply()
+    {
+        var handler = MakeHandler();
+        Assert.Null(handler.Handle(""));
+        Assert.Null(handler.Handle("   "));
+    }
 }
