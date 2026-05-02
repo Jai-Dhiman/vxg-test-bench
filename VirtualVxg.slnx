@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/VirtualVxg.OpenTapPlugin/VirtualVxg.OpenTapPlugin.csproj" />
     <Project Path="src/VirtualVxg.Simulator/VirtualVxg.Simulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VirtualVxg.Tests/VirtualVxg.Tests.csproj" />
   </Folder>
 </Solution>
