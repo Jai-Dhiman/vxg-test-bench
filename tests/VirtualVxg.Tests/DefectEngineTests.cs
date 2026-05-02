@@ -58,4 +58,26 @@ public class DefectEngineTests
         Assert.True(atSpur <= -2.5, $"expected <= -2.5 dB at spur, got {atSpur}");
         Assert.InRange(above, -0.01, 0.01);
     }
+
+    [Fact]
+    public void SameSeed_SameCalls_ProduceIdenticalResults()
+    {
+        UnitConfig MakeConfig() => new(
+            UnitId: "det-001",
+            Seed: 1234,
+            NoiseFloorDb: 0.05,
+            RolloffDbPerGhzAbove: new RolloffDefect(20, -0.5),
+            Spurs: new[] { new SpurDefect(15e9, 50e6, -2.0) });
+
+        var engineA = new DefectEngine(MakeConfig());
+        var engineB = new DefectEngine(MakeConfig());
+
+        var freqs = new[] { 1e9, 5e9, 12e9, 15e9, 22e9, 40e9 };
+        foreach (var f in freqs)
+        {
+            var a = engineA.MeasurePowerAt(f, 0.0);
+            var b = engineB.MeasurePowerAt(f, 0.0);
+            Assert.Equal(BitConverter.DoubleToInt64Bits(a), BitConverter.DoubleToInt64Bits(b));
+        }
+    }
 }
