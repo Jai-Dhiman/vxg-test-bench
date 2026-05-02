@@ -1,1 +1,28 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# macOS
+.DS_Store
+
+# OpenTAP
+TapPackages/
+PackageCache/
+SessionLogs/
+Results/
+
+# Toolchain record (local only)
+.toolchain
+
+# Fly secrets
+.fly/
+
+# Local env
+.env
+.env.local
+
+# Worktrees
 .worktrees/
