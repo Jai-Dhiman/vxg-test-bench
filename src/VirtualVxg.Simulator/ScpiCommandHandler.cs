@@ -31,6 +31,8 @@ public sealed class ScpiCommandHandler
             "FREQ?" => _state.FrequencyHz.ToString("F0", CultureInfo.InvariantCulture),
             "POW" => SetPower(arg),
             "POW?" => _state.PowerDbm.ToString("0.0##", CultureInfo.InvariantCulture),
+            "OUTP" => SetOutput(arg),
+            "MEAS:POW?" => MeasurePower(),
             _ => "-100,\"Command error\""
         };
     }
@@ -49,5 +51,24 @@ public sealed class ScpiCommandHandler
             return "-100,\"Command error\"";
         _state.PowerDbm = dbm;
         return null;
+    }
+
+    private string? SetOutput(string arg)
+    {
+        var v = arg.Trim().ToUpperInvariant();
+        _state.OutputOn = v switch
+        {
+            "ON" or "1" => true,
+            "OFF" or "0" => false,
+            _ => throw new FormatException($"Invalid OUTP argument: {arg}")
+        };
+        return null;
+    }
+
+    private string MeasurePower()
+    {
+        if (!_state.OutputOn) return "-200.0";
+        var measured = _defects.MeasurePowerAt(_state.FrequencyHz, _state.PowerDbm);
+        return measured.ToString("0.0####", CultureInfo.InvariantCulture);
     }
 }

@@ -34,4 +34,26 @@ public class ScpiCommandHandlerTests
         var reply = handler.Handle("POW?");
         Assert.Equal("-10.5", reply);
     }
+
+    [Fact]
+    public void MeasPow_OutputOn_ReturnsDefectEnginePower()
+    {
+        var handler = MakeHandler();
+        handler.Handle("FREQ 5e9");
+        handler.Handle("POW 0");
+        handler.Handle("OUTP ON");
+        var reply = handler.Handle("MEAS:POW?");
+
+        var measured = double.Parse(reply!, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.InRange(measured, -0.01, 0.01);
+    }
+
+    [Fact]
+    public void MeasPow_OutputOff_ReturnsSentinelBelowNoiseFloor()
+    {
+        var handler = MakeHandler();
+        handler.Handle("OUTP OFF");
+        var reply = handler.Handle("MEAS:POW?");
+        Assert.Equal("-200.0", reply);
+    }
 }
