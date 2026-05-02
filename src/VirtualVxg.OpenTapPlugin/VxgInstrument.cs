@@ -37,9 +37,12 @@ public class VxgInstrument : Instrument
     public void SetPower(double dbm) =>
         Send($"POW {dbm.ToString("R", CultureInfo.InvariantCulture)}");
 
+    public void EnableOutput() => Send("OUTP ON");
+
+    public void DisableOutput() => Send("OUTP OFF");
+
     public double MeasurePower()
     {
-        Send("OUTP ON");
         var reply = Query("MEAS:POW?");
         return double.Parse(reply, NumberStyles.Float, CultureInfo.InvariantCulture);
     }

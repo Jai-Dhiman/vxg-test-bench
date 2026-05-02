@@ -20,6 +20,7 @@ public class PowerFlatnessSweep : TestStep
     public override void Run()
     {
         Instrument.SetPower(NominalPowerDbm);
+        Instrument.EnableOutput();
         var failed = 0;
         var freqColumn = new List<double>();
         var powerColumn = new List<double>();

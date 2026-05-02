@@ -42,6 +42,9 @@ public class InfluxDbResultListener : ResultListener
     public override void Open() { }
     public override void Close() { }
 
+    private static string EscapeTagValue(string v) =>
+        v.Replace(@"\", @"\\").Replace(",", @"\,").Replace("=", @"\=").Replace(" ", @"\ ");
+
     private static string FormatLineProtocol(ResultTable result)
     {
         var unitIdCol = FindColumn(result, "unit_id");
@@ -50,17 +53,18 @@ public class InfluxDbResultListener : ResultListener
         var passCol = FindColumn(result, "pass");
         if (unitIdCol is null || freqCol is null || powerCol is null) return "";
 
+        var measurementName = EscapeTagValue(result.Name);
         var sb = new StringBuilder();
         var nowNs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000L;
         for (var i = 0; i < result.Rows; i++)
         {
-            var unit = unitIdCol.Data.GetValue(i)?.ToString() ?? "unknown";
+            var unit = EscapeTagValue(unitIdCol.Data.GetValue(i)?.ToString() ?? "unknown");
             var freq = Convert.ToDouble(freqCol.Data.GetValue(i), CultureInfo.InvariantCulture);
             var power = Convert.ToDouble(powerCol.Data.GetValue(i), CultureInfo.InvariantCulture);
             var pass = passCol is not null
                 ? Convert.ToBoolean(passCol.Data.GetValue(i)) ? "true" : "false"
                 : "true";
-            sb.Append(result.Name)
+            sb.Append(measurementName)
               .Append(",unit_id=").Append(unit)
               .Append(" frequency_hz=").Append(freq.ToString("R", CultureInfo.InvariantCulture))
               .Append(",power_dbm=").Append(power.ToString("R", CultureInfo.InvariantCulture))

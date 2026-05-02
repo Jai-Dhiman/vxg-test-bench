@@ -15,8 +15,8 @@ public class ScpiServerTests
             "test", 42, 0.0, null, Array.Empty<SpurDefect>()));
         var handler = new ScpiCommandHandler(state, defects);
         var server = new ScpiServer(handler);
-        var port = GetFreePort();
-        await server.StartAsync(port, CancellationToken.None);
+        await server.StartAsync(0, CancellationToken.None);
+        var port = server.BoundPort;
 
         try
         {
@@ -38,12 +38,4 @@ public class ScpiServerTests
         }
     }
 
-    private static int GetFreePort()
-    {
-        var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
-        listener.Start();
-        var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
-    }
 }

@@ -13,11 +13,14 @@ public sealed class ScpiServer
 
     public ScpiServer(ScpiCommandHandler handler) { _handler = handler; }
 
+    public int BoundPort { get; private set; }
+
     public Task StartAsync(int port, CancellationToken externalToken)
     {
         _cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
         _listener = new TcpListener(IPAddress.Loopback, port);
         _listener.Start();
+        BoundPort = ((IPEndPoint)_listener.LocalEndpoint).Port;
         _acceptLoop = Task.Run(() => AcceptLoopAsync(_cts.Token));
         return Task.CompletedTask;
     }
@@ -41,7 +44,14 @@ public sealed class ScpiServer
             catch (OperationCanceledException) { return; }
             catch (ObjectDisposedException) { return; }
 
-            _ = Task.Run(() => HandleClientAsync(client, ct), ct);
+            _ = Task.Run(async () =>
+            {
+                try { await HandleClientAsync(client, ct); }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    Console.Error.WriteLine($"[ScpiServer] client handler faulted: {ex.Message}");
+                }
+            }, ct);
         }
     }
 

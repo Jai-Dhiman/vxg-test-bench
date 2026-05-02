@@ -2,7 +2,6 @@ using OpenTap;
 using VirtualVxg.OpenTapPlugin;
 using VirtualVxg.Simulator;
 using Xunit;
-using System.Net.Sockets;
 
 namespace VirtualVxg.Tests;
 
@@ -76,11 +75,7 @@ public class PowerFlatnessSweepTests
     {
         var handler = new ScpiCommandHandler(new InstrumentState(), new DefectEngine(config));
         var server = new ScpiServer(handler);
-        var l = new TcpListener(System.Net.IPAddress.Loopback, 0);
-        l.Start();
-        var port = ((System.Net.IPEndPoint)l.LocalEndpoint).Port;
-        l.Stop();
-        await server.StartAsync(port, CancellationToken.None);
-        return (server, port);
+        await server.StartAsync(0, CancellationToken.None);
+        return (server, server.BoundPort);
     }
 }

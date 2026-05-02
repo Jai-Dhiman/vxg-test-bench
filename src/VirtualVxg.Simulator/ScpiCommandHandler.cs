@@ -8,6 +8,7 @@ public sealed class ScpiCommandHandler
 
     private readonly InstrumentState _state;
     private readonly DefectEngine _defects;
+    private readonly object _lock = new();
 
     public ScpiCommandHandler(InstrumentState state, DefectEngine defects)
     {
@@ -17,24 +18,27 @@ public sealed class ScpiCommandHandler
 
     public string? Handle(string commandLine)
     {
-        var trimmed = commandLine.Trim();
-        if (trimmed.Length == 0) return null;
-
-        var parts = trimmed.Split(' ', 2);
-        var verb = parts[0].ToUpperInvariant();
-        var arg = parts.Length > 1 ? parts[1] : "";
-
-        return verb switch
+        lock (_lock)
         {
-            "*IDN?" => IdnReply,
-            "FREQ" => SetFrequency(arg),
-            "FREQ?" => _state.FrequencyHz.ToString("F0", CultureInfo.InvariantCulture),
-            "POW" => SetPower(arg),
-            "POW?" => _state.PowerDbm.ToString("0.0##", CultureInfo.InvariantCulture),
-            "OUTP" => SetOutput(arg),
-            "MEAS:POW?" => MeasurePower(),
-            _ => "-100,\"Command error\""
-        };
+            var trimmed = commandLine.Trim();
+            if (trimmed.Length == 0) return null;
+
+            var parts = trimmed.Split(' ', 2);
+            var verb = parts[0].ToUpperInvariant();
+            var arg = parts.Length > 1 ? parts[1] : "";
+
+            return verb switch
+            {
+                "*IDN?" => IdnReply,
+                "FREQ" => SetFrequency(arg),
+                "FREQ?" => _state.FrequencyHz.ToString("F0", CultureInfo.InvariantCulture),
+                "POW" => SetPower(arg),
+                "POW?" => _state.PowerDbm.ToString("0.0##", CultureInfo.InvariantCulture),
+                "OUTP" => SetOutput(arg),
+                "MEAS:POW?" => MeasurePower(),
+                _ => "-100,\"Command error\""
+            };
+        }
     }
 
     private string? SetFrequency(string arg)
