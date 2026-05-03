@@ -3,11 +3,11 @@ datasources:
   - name: InfluxDB
     type: influxdb
     access: proxy
-    url: http://influxdb:8086
+    url: ${INFLUXDB_URL}
     jsonData:
       version: Flux
-      organization: demo
+      organization: ${INFLUXDB_ORG}
       defaultBucket: vxg_tests
     secureJsonData:
-      token: local-dev-token
+      token: ${INFLUXDB_TOKEN}
     isDefault: true
