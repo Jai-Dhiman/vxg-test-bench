@@ -65,6 +65,8 @@ for cfg in "${CONFIGS[@]}"; do
   echo "==> Running unit: $unit_id"
   tmp_plan=$(mktemp /tmp/sweep-XXXXXX.TapPlan)
   sed "s|<UnitId>.*</UnitId>|<UnitId>$unit_id</UnitId>|" plans/flatness-sweep.TapPlan > "$tmp_plan"
+  lsof -ti :5025 | xargs kill -9 2>/dev/null || true
+  sleep 1
   dotnet run --project src/VirtualVxg.Simulator --no-build -c Release -- --config "$cfg" --port 5025 &
   SIM_PID=$!
   sleep 2
