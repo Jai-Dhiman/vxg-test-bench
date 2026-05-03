@@ -3,9 +3,9 @@ set -euo pipefail
 
 export PATH="$HOME/opentap:$PATH"
 
-# Override these env vars to seed the remote Fly dashboard instead of localhost.
 INFLUXDB_URL="${INFLUXDB_URL:-http://localhost:8086}"
 INFLUXDB_TOKEN="${INFLUXDB_TOKEN:-local-dev-token}"
+INFLUXDB_ORG="${INFLUXDB_ORG:-demo}"
 
 CONFIGS=(
   "src/VirtualVxg.Simulator/configs/unit-good.json"
@@ -21,8 +21,34 @@ CONFIGS=(
   "src/VirtualVxg.Simulator/configs/unit-bad-004.json"
 )
 
+RESULT_SETTINGS="Settings/ResultSettings.xml"
+RESULT_SETTINGS_BACKUP="${RESULT_SETTINGS}.bak"
+
+restore_settings() {
+  if [[ -f "$RESULT_SETTINGS_BACKUP" ]]; then
+    mv "$RESULT_SETTINGS_BACKUP" "$RESULT_SETTINGS"
+  fi
+}
+trap restore_settings EXIT
+
 echo "==> Building..."
 dotnet build -c Release VirtualVxg.slnx >/dev/null
+
+# Patch ResultSettings.xml with target InfluxDB credentials.
+cp "$RESULT_SETTINGS" "$RESULT_SETTINGS_BACKUP"
+cat > "$RESULT_SETTINGS" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<ResultSettings type="System.Collections.Generic.List\`1[[OpenTap.IResultListener, OpenTap]]">
+  <ResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
+    <Url>$INFLUXDB_URL</Url>
+    <Bucket>vxg_tests</Bucket>
+    <Org>$INFLUXDB_ORG</Org>
+    <Token>$INFLUXDB_TOKEN</Token>
+    <Name>InfluxDB</Name>
+    <IsEnabled>true</IsEnabled>
+  </ResultListener>
+</ResultSettings>
+XML
 
 if [[ "$INFLUXDB_URL" == "http://localhost:8086" ]]; then
   if ! curl -fsS http://localhost:8086/health >/dev/null 2>&1; then
@@ -38,11 +64,7 @@ for cfg in "${CONFIGS[@]}"; do
   unit_id=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['unit_id'])" "$cfg")
   echo "==> Running unit: $unit_id"
   tmp_plan=$(mktemp /tmp/sweep-XXXXXX.TapPlan)
-  sed \
-    -e "s|<UnitId>.*</UnitId>|<UnitId>$unit_id</UnitId>|" \
-    -e "s|__INFLUXDB_URL__|$INFLUXDB_URL|" \
-    -e "s|__INFLUXDB_TOKEN__|$INFLUXDB_TOKEN|" \
-    plans/flatness-sweep.TapPlan > "$tmp_plan"
+  sed "s|<UnitId>.*</UnitId>|<UnitId>$unit_id</UnitId>|" plans/flatness-sweep.TapPlan > "$tmp_plan"
   dotnet run --project src/VirtualVxg.Simulator --no-build -c Release -- --config "$cfg" --port 5025 &
   SIM_PID=$!
   sleep 2

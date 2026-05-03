@@ -17,12 +17,4 @@
       <ChildTestSteps />
     </TestStep>
   </Steps>
-  <ResultListeners>
-    <ResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
-      <Url>__INFLUXDB_URL__</Url>
-      <Bucket>vxg_tests</Bucket>
-      <Org>demo</Org>
-      <Token>__INFLUXDB_TOKEN__</Token>
-    </ResultListener>
-  </ResultListeners>
 </TestPlan>
