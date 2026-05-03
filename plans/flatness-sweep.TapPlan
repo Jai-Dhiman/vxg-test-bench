@@ -8,7 +8,7 @@
         <Name>INST</Name>
       </Instrument>
       <StartFreqHz>1000000000</StartFreqHz>
-      <StopFreqHz>6000000000</StopFreqHz>
+      <StopFreqHz>20000000000</StopFreqHz>
       <StepFreqHz>500000000</StepFreqHz>
       <NominalPowerDbm>0</NominalPowerDbm>
       <ToleranceDb>0.5</ToleranceDb>

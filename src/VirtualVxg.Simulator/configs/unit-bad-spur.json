@@ -4,6 +4,6 @@
   "noise_floor_db": 0.05,
   "rolloff_db_per_ghz_above_ghz": null,
   "spurs": [
-    { "center_hz": 12000000000.0, "width_hz": 200000000.0, "depth_db": -1.5 }
+    { "center_hz": 8000000000.0, "width_hz": 300000000.0, "depth_db": -1.5 }
   ]
 }

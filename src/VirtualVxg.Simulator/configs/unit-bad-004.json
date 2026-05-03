@@ -1,0 +1,1 @@
+{ "unit_id": "VXG-BAD-006", "seed": 100, "noise_floor_db": 0.05, "rolloff_db_per_ghz_above_ghz": null, "spurs": [ { "center_hz": 5000000000.0, "width_hz": 500000000.0, "depth_db": -1.2 } ] }

@@ -1,32 +1,142 @@
 {
-  "title": "VXG Power Flatness",
+  "title": "VXG Power Flatness — NPI Test Bench",
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "5s",
+  "version": 2,
+  "refresh": "10s",
+  "time": { "from": "now-2h", "to": "now" },
   "panels": [
     {
-      "id": 1, "type": "timeseries", "title": "Power vs Frequency",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
-      "targets": [{
-        "refId": "A",
-        "query": "from(bucket: \"vxg_tests\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")"
-      }]
+      "id": 1,
+      "type": "timeseries",
+      "title": "Output Power vs Frequency (1–20 GHz) — all units",
+      "description": "Each line is one simulated unit under test. Tolerance band: ±0.5 dB. Curves that drop below −0.5 dBm or spike above +0.5 dBm indicate a failing unit.",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dBm",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": -0.5 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group(columns: [\"unit_id\"])"
+        }
+      ]
     },
     {
-      "id": 2, "type": "table", "title": "Per-Unit Pass/Fail",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
-      "targets": [{
-        "refId": "A",
-        "query": "from(bucket: \"vxg_tests\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\") |> group(columns: [\"unit_id\"]) |> count()"
-      }]
+      "id": 2,
+      "type": "table",
+      "title": "Unit Yield — Pass / Fail per Unit",
+      "description": "55% yield shown here is realistic for a new product line in early NPI. Rows highlighted red have at least one out-of-spec frequency point.",
+      "gridPos": { "h": 10, "w": 14, "x": 0, "y": 12 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "fail_count" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "red", "value": 1 }
+                  ]
+                }
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "fail_count", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
+        }
+      ]
     },
     {
-      "id": 3, "type": "table", "title": "Run History",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
-      "targets": [{
-        "refId": "A",
-        "query": "from(bucket: \"vxg_tests\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"PowerFlatness\") |> keep(columns: [\"_time\", \"unit_id\", \"_field\", \"_value\"]) |> tail(n: 50)"
-      }]
+      "id": 3,
+      "type": "stat",
+      "title": "Production Yield",
+      "description": "% of units with zero out-of-spec points across the full 1–20 GHz sweep.",
+      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 12 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "green", "value": 80 }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "passing = from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> filter(fn: (r) => r.any_fail == false)\n  |> group()\n  |> count(column: \"any_fail\")\n\ntotal = from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> first()\n  |> group()\n  |> count(column: \"_value\")\n\njoin(tables: {passing: passing, total: total}, on: [])\n  |> map(fn: (r) => ({_value: float(v: r._value_passing) / float(v: r._value_total) * 100.0}))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Failure Mode",
+      "description": "Most common failure pattern in this production run.",
+      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 17 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\" and r._value == false)\n  |> group(columns: [\"unit_id\"])\n  |> count(column: \"_value\")\n  |> group()\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\"}))"
+        }
+      ]
     }
   ]
 }

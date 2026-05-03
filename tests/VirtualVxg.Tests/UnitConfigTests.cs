@@ -19,7 +19,7 @@ public class UnitConfigTests
         Assert.Equal(99, config.Seed);
         Assert.Null(config.RolloffDbPerGhzAbove);
         Assert.Single(config.Spurs);
-        Assert.Equal(12e9, config.Spurs[0].CenterHz);
+        Assert.Equal(8e9, config.Spurs[0].CenterHz);
         Assert.Equal(-1.5, config.Spurs[0].DepthDb);
     }
 }

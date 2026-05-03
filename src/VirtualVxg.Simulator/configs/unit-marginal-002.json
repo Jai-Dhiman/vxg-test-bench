@@ -1,0 +1,1 @@
+{ "unit_id": "VXG-MARGINAL-004", "seed": 8, "noise_floor_db": 0.08, "rolloff_db_per_ghz_above_ghz": { "knee_ghz": 12.0, "slope_db_per_ghz": -0.35 }, "spurs": [] }
