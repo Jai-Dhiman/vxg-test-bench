@@ -1,4 +1,5 @@
 {
+  "uid": "vxg-npi",
   "title": "VXG Power Flatness — NPI Test Bench",
   "schemaVersion": 39,
   "version": 2,
@@ -108,7 +109,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "passing = from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> filter(fn: (r) => r.any_fail == false)\n  |> group()\n  |> count(column: \"any_fail\")\n\ntotal = from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> first()\n  |> group()\n  |> count(column: \"_value\")\n\njoin(tables: {passing: passing, total: total}, on: [])\n  |> map(fn: (r) => ({_value: float(v: r._value_passing) / float(v: r._value_total) * 100.0}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
         }
       ]
     },
@@ -134,7 +135,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\" and r._value == false)\n  |> group(columns: [\"unit_id\"])\n  |> count(column: \"_value\")\n  |> group()\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\"}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
         }
       ]
     }

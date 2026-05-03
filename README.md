@@ -4,7 +4,9 @@ A simulated Keysight M9484C VXG signal generator with an OpenTAP plugin running
 an Output Power Flatness sweep across multiple "units under test." Live results
 stream to a public Grafana dashboard.
 
-**Live dashboard:** _deploy pending — run `make deploy` to publish_
+**Live dashboard:** https://vxg-test-bench.fly.dev/d/vxg-npi/vxg-power-flatness-e28094-npi-test-bench
+
+![VXG Power Flatness Dashboard](docs/dashboard-screenshot.png)
 
 ## What it does
 

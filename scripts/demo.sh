@@ -21,7 +21,7 @@ CONFIGS=(
   "src/VirtualVxg.Simulator/configs/unit-bad-004.json"
 )
 
-RESULT_SETTINGS="Settings/ResultSettings.xml"
+RESULT_SETTINGS="$HOME/opentap/Settings/Results.xml"
 RESULT_SETTINGS_BACKUP="${RESULT_SETTINGS}.bak"
 
 restore_settings() {
@@ -34,19 +34,19 @@ trap restore_settings EXIT
 echo "==> Building..."
 dotnet build -c Release VirtualVxg.slnx >/dev/null
 
-# Patch ResultSettings.xml with target InfluxDB credentials.
+# Patch Results.xml with target InfluxDB credentials.
 cp "$RESULT_SETTINGS" "$RESULT_SETTINGS_BACKUP"
 cat > "$RESULT_SETTINGS" <<XML
 <?xml version="1.0" encoding="utf-8"?>
-<ResultSettings type="System.Collections.Generic.List\`1[[OpenTap.IResultListener, OpenTap]]">
-  <ResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
+<ResultSettings type="OpenTap.ResultSettings">
+  <InfluxDbResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
     <Url>$INFLUXDB_URL</Url>
     <Bucket>vxg_tests</Bucket>
     <Org>$INFLUXDB_ORG</Org>
     <Token>$INFLUXDB_TOKEN</Token>
     <Name>InfluxDB</Name>
     <IsEnabled>true</IsEnabled>
-  </ResultListener>
+  </InfluxDbResultListener>
 </ResultSettings>
 XML
 
