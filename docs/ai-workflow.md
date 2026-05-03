@@ -32,12 +32,11 @@ hand, and where its output was rejected.
 
 ## Where I rejected AI output
 
-- An initial proposal to add a Python ML anomaly model — cut as scope creep.
-- An initial proposal to add an LLM-powered "test failure RCA assistant" —
-  cut because adding AI features for the sake of AI features is exactly the
-  trap the hiring manager warned against.
-- Suggestions to mock `VxgInstrument` in tests — rejected. All instrument
-  tests run against a real `ScpiServer` over TCP.
+- An initial proposal to add a Python ML anomaly model — cut as scope creep. The hiring manager asked for a simulated test bench, not a research project.
+- An initial proposal to add an LLM-powered "test failure RCA assistant" — cut because adding AI features for the sake of AI is exactly the trap. The disruptor signal is in the workflow, not the product.
+- Generated `VxgInstrument` initially called `Send("OUTP ON")` inside `MeasurePower()` — wrong, because output state is the caller's responsibility, not the measurement query's. Rewrote before commit.
+- All test drafts that used `Mock<VxgInstrument>` were rejected. Tests that mock the system under test pass when the system is broken. Every test in this repo hits a real `ScpiServer` over TCP.
+- Generated `OUTP` handler used `throw new FormatException(...)` on invalid args — rejected. Real SCPI instruments return an error string; they don't crash the connection. Fixed to return `-100,"Command error"`.
 
 ## Sensitive data handling
 
@@ -45,10 +44,3 @@ hand, and where its output was rejected.
   stored only in Fly secrets.
 - `.gitignore` covers `.env`, `.fly/`, and the `.toolchain` version-record file.
 - The Grafana dashboard is anonymous-Viewer read-only. No write access exposed.
-
-## What "AI disruptor" actually means here
-
-Not "shove a chatbot into the test rig." It means: a developer who had never
-touched Keysight's stack shipped a working OpenTAP plugin in one weekend by
-using Claude Code with discipline — clear specs, tight feedback loops, and
-every line of generated code reviewed before commit.
