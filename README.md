@@ -57,9 +57,3 @@ http://localhost:3000.
 - `deploy/` — Fly.io + Grafana provisioning
 - `docs/specs/` — design spec
 - `docs/plans/` — TDD implementation plan
-- `docs/ai-workflow.md` — how Claude Code was used and bounded
-
-## Built by
-
-Jai Dhiman — over a long weekend, on Mac, using Claude Code, no prior
-OpenTAP / SCPI experience. See `docs/ai-workflow.md` for the methodology.
