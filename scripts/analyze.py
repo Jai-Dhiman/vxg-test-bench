@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "influxdb-client>=1.44.0",
+#     "scikit-learn>=1.5.0",
+#     "numpy>=1.26.0",
+# ]
+# ///
 from __future__ import annotations
 
 import os
