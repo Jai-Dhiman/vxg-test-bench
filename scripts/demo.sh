@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export PATH="$HOME/opentap:$PATH"
+OPENTAP_HOME="${OPENTAP_HOME:-$HOME/opentap}"
+export PATH="$OPENTAP_HOME:$PATH"
 
 INFLUXDB_URL="${INFLUXDB_URL:-http://localhost:8086}"
 INFLUXDB_TOKEN="${INFLUXDB_TOKEN:-local-dev-token}"
@@ -21,7 +22,7 @@ CONFIGS=(
   "src/VirtualVxg.Simulator/configs/unit-bad-004.json"
 )
 
-RESULT_SETTINGS="$HOME/opentap/Settings/Results.xml"
+RESULT_SETTINGS="$OPENTAP_HOME/Settings/Results.xml"
 RESULT_SETTINGS_BACKUP="${RESULT_SETTINGS}.bak"
 
 restore_settings() {

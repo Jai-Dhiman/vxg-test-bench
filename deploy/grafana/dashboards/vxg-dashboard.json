@@ -4,7 +4,7 @@
   "schemaVersion": 39,
   "version": 2,
   "refresh": "10s",
-  "time": { "from": "now-2h", "to": "now" },
+  "time": { "from": "now-7d", "to": "now" },
   "panels": [
     {
       "id": 1,
@@ -35,7 +35,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group(columns: [\"unit_id\"])"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group(columns: [\"unit_id\"])"
         }
       ]
     },
@@ -72,7 +72,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
         }
       ]
     },
@@ -109,7 +109,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
         }
       ]
     },
@@ -135,7 +135,82 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Process Capability (Cpk)",
+      "description": "Cpk = min((USL−μ)/(3σ), (μ−LSL)/(3σ)). USL=+0.5 dBm, LSL=−0.5 dBm. Target ≥1.33 (4-sigma process). Values below 1.0 mean the process cannot hold tolerance.",
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 22 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "yellow", "value": 1.0  },
+              { "color": "green",  "value": 1.33 }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "import \"math\"\n\nfrom(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group()\n  |> reduce(\n      fn: (r, accumulator) => ({\n        n:    accumulator.n + 1.0,\n        sum:  accumulator.sum + r._value,\n        sum2: accumulator.sum2 + r._value * r._value\n      }),\n      identity: {n: 0.0, sum: 0.0, sum2: 0.0}\n    )\n  |> map(fn: (r) => {\n      mean = r.sum / r.n\n      variance = r.sum2 / r.n - mean * mean\n      sigma = if variance > 0.0 then math.sqrt(x: variance) else 1.0e-9\n      cpu = (0.5 - mean) / (3.0 * sigma)\n      cpl = (mean - (-0.5)) / (3.0 * sigma)\n      cpk = if cpu < cpl then cpu else cpl\n      return {_value: cpk, _field: \"cpk\", _time: now()}\n    })"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Anomaly Detection — Latest Run",
+      "description": "IsolationForest on unit power curves. Negative score = more anomalous. is_anomaly=true flags units whose full frequency response deviates from the fleet.",
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 22 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "is_anomaly" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "red",   "value": 1 }
+                  ]
+                }
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "anomaly_score", "desc": false }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"PowerAnomalies\")\n  |> pivot(rowKey: [\"_time\", \"unit_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"unit_id\", \"anomaly_score\", \"is_anomaly\"])\n  |> sort(columns: [\"anomaly_score\"], desc: false)"
         }
       ]
     }

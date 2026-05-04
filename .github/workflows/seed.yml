@@ -1,0 +1,59 @@
+name: Seed live dashboard
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    env:
+      INFLUXDB_URL:   ${{ secrets.INFLUXDB_URL }}
+      INFLUXDB_TOKEN: ${{ secrets.INFLUXDB_TOKEN }}
+      INFLUXDB_ORG:   ${{ secrets.INFLUXDB_ORG }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: dotnet build VirtualVxg.slnx --configuration Release
+
+      - name: Prepare OpenTAP installation directory
+        run: |
+          OPENTAP_DIR="src/VirtualVxg.OpenTapPlugin/bin/Release/net10.0"
+
+          # Settings/ must exist before demo.sh backs it up before patching.
+          mkdir -p "${OPENTAP_DIR}/Settings"
+          cat > "${OPENTAP_DIR}/Settings/Results.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <ResultSettings type="OpenTap.ResultSettings">
+            <InfluxDbResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
+              <Url>http://localhost:8086</Url>
+              <Bucket>vxg_tests</Bucket>
+              <Org>placeholder</Org>
+              <Token>placeholder</Token>
+              <Name>InfluxDB</Name>
+              <IsEnabled>true</IsEnabled>
+            </InfluxDbResultListener>
+          </ResultSettings>
+          XML
+
+          # Place plugin DLL in Packages/VirtualVxg/ for OpenTAP's scanner.
+          mkdir -p "${OPENTAP_DIR}/Packages/VirtualVxg"
+          cp "${OPENTAP_DIR}/VirtualVxg.OpenTapPlugin.dll" \
+             "${OPENTAP_DIR}/Packages/VirtualVxg/"
+
+          echo "OPENTAP_HOME=${OPENTAP_DIR}" >> "$GITHUB_ENV"
+
+      - name: Run OpenTAP sweep (all 11 units)
+        run: bash scripts/demo.sh
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Run anomaly detection
+        run: uv run python scripts/analyze.py
