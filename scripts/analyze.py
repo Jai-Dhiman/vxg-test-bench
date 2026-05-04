@@ -83,7 +83,7 @@ def main() -> None:
         .tag("unit_id", uid)
         .field("anomaly_score", float(scores[i]))
         .field("is_anomaly",    bool(predictions[i] == -1))
-        .time(now, WritePrecision.NANOSECONDS)
+        .time(now, WritePrecision.NS)
         for i, uid in enumerate(unit_ids)
     ]
     write_api = client.write_api(write_options=SYNCHRONOUS)
