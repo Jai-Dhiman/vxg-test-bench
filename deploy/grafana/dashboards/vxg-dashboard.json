@@ -6,6 +6,8 @@
   "refresh": "10s",
   "time": { "from": "now-7d", "to": "now" },
   "timepicker": { "refresh_intervals": ["10s", "30s", "1m", "5m"] },
+  "annotations": { "list": [] },
+  "templating": { "list": [] },
   "panels": [
     {
       "id": 1,
@@ -187,7 +189,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "import \"math\"\n\nfrom(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> group()\n  |> reduce(\n      fn: (r, accumulator) => ({\n        n:    accumulator.n + 1.0,\n        sum:  accumulator.sum + r._value,\n        sum2: accumulator.sum2 + r._value * r._value\n      }),\n      identity: {n: 0.0, sum: 0.0, sum2: 0.0}\n    )\n  |> map(fn: (r) => {\n      mean = r.sum / r.n\n      variance = r.sum2 / r.n - mean * mean\n      sigma = if variance > 0.0 then math.sqrt(x: variance) else 1.0e-9\n      cpu = (0.5 - mean) / (3.0 * sigma)\n      cpl = (mean - (-0.5)) / (3.0 * sigma)\n      cpk = if cpu < cpl then cpu else cpl\n      return {_value: cpk, _field: \"cpk\", _time: now()}\n    })"
+          "query": "usl = 0.5\nlsl = -0.5\n\nbase = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> group()\n\nmean_t   = base |> mean()   |> map(fn: (r) => ({_value: r._value, stat: \"mean\"}))\nstddev_t = base |> stddev() |> map(fn: (r) => ({_value: r._value, stat: \"sigma\"}))\n\nunion(tables: [mean_t, stddev_t])\n  |> pivot(rowKey: [], columnKey: [\"stat\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      _time: now(),\n      _field: \"cpk\",\n      _value:\n        if r.sigma <= 0.0 then 0.0\n        else if (usl - r.mean) / (3.0 * r.sigma) < (r.mean - lsl) / (3.0 * r.sigma)\n          then (usl - r.mean) / (3.0 * r.sigma)\n          else (r.mean - lsl) / (3.0 * r.sigma)\n    }))\n  |> yield(name: \"cpk\")"
         }
       ]
     },
@@ -224,7 +226,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"PowerAnomalies\")\n  |> pivot(rowKey: [\"_time\", \"unit_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"unit_id\", \"anomaly_score\", \"is_anomaly\"])\n  |> sort(columns: [\"anomaly_score\"], desc: false)"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerAnomalies\")\n  |> pivot(rowKey: [\"_time\", \"unit_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"_time\", \"unit_id\", \"anomaly_score\", \"is_anomaly\"])\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"anomaly_score\")\n  |> group()\n  |> sort(columns: [\"anomaly_score\"], desc: false)"
         }
       ]
     }

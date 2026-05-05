@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResultSettings type="System.Collections.Generic.List`1[[OpenTap.IResultListener, OpenTap]]">
+  <ResultListener type="VirtualVxg.OpenTapPlugin.InfluxDbResultListener">
+    <Url>http://localhost:8086</Url>
+    <Bucket>vxg_tests</Bucket>
+    <Org>demo</Org>
+    <Token>local-dev-token</Token>
+    <Name>InfluxDB</Name>
+    <IsEnabled>true</IsEnabled>
+  </ResultListener>
+</ResultSettings>

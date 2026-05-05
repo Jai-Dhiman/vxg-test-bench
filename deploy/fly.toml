@@ -1,17 +1,22 @@
-app = "vxg-test-bench"
-primary_region = "sjc"
+# fly.toml app configuration file generated for vxg-test-bench on 2026-05-02T20:57:37-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'vxg-test-bench'
+primary_region = 'sjc'
 
 [build]
-  dockerfile = "Dockerfile.grafana"
+  dockerfile = 'Dockerfile.grafana'
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
 [[vm]]
-  cpu_kind = "shared"
+  memory = '256mb'
   cpus = 1
   memory_mb = 256
