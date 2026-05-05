@@ -2,40 +2,54 @@
   "uid": "vxg-npi",
   "title": "VXG Power Flatness — NPI Test Bench",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "time": { "from": "now-7d", "to": "now" },
+  "timepicker": { "refresh_intervals": ["10s", "30s", "1m", "5m"] },
   "panels": [
     {
       "id": 1,
-      "type": "timeseries",
+      "type": "xychart",
       "title": "Output Power vs Frequency (1–20 GHz) — all units",
-      "description": "Each line is one simulated unit under test. Tolerance band: ±0.5 dB. Curves that drop below −0.5 dBm or spike above +0.5 dBm indicate a failing unit.",
+      "description": "Each line is one simulated unit under test. Tolerance band: ±0.5 dB. Units that dip below −0.5 dBm or spike above +0.5 dBm are failing.",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "options": {
+        "mapping": "auto",
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "dBm",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": -0.5 },
-              { "color": "red", "value": 0.5 }
-            ]
+          "custom": {
+            "lineWidth": 2,
+            "pointSize": 4,
+            "fillOpacity": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
           }
         },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "frequency_hz" },
+            "properties": [
+              { "id": "unit", "value": "hertz" },
+              { "id": "displayName", "value": "Frequency" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "power_dbm" },
+            "properties": [
+              { "id": "displayName", "value": "Power (dBm)" }
+            ]
+          }
+        ]
       },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group(columns: [\"unit_id\"])"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and (r._field == \"power_dbm\" or r._field == \"frequency_hz\"))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"_time\", \"frequency_hz\", \"power_dbm\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> sort(columns: [\"frequency_hz\"])"
         }
       ]
     },
@@ -72,7 +86,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
         }
       ]
     },
@@ -80,7 +94,7 @@
       "id": 3,
       "type": "stat",
       "title": "Production Yield",
-      "description": "% of units with zero out-of-spec points across the full 1–20 GHz sweep.",
+      "description": "% of units with zero out-of-spec points across the full sweep.",
       "gridPos": { "h": 5, "w": 10, "x": 14, "y": 12 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
@@ -109,15 +123,15 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
         }
       ]
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "Failure Mode",
-      "description": "Most common failure pattern in this production run.",
+      "title": "Failing Units",
+      "description": "Number of units with at least one out-of-spec frequency point in this 7-day window.",
       "gridPos": { "h": 5, "w": 10, "x": 14, "y": 17 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
@@ -135,7 +149,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
         }
       ]
     },
@@ -173,7 +187,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "import \"math\"\n\nfrom(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> group()\n  |> reduce(\n      fn: (r, accumulator) => ({\n        n:    accumulator.n + 1.0,\n        sum:  accumulator.sum + r._value,\n        sum2: accumulator.sum2 + r._value * r._value\n      }),\n      identity: {n: 0.0, sum: 0.0, sum2: 0.0}\n    )\n  |> map(fn: (r) => {\n      mean = r.sum / r.n\n      variance = r.sum2 / r.n - mean * mean\n      sigma = if variance > 0.0 then math.sqrt(x: variance) else 1.0e-9\n      cpu = (0.5 - mean) / (3.0 * sigma)\n      cpl = (mean - (-0.5)) / (3.0 * sigma)\n      cpk = if cpu < cpl then cpu else cpl\n      return {_value: cpk, _field: \"cpk\", _time: now()}\n    })"
+          "query": "import \"math\"\n\nfrom(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> group()\n  |> reduce(\n      fn: (r, accumulator) => ({\n        n:    accumulator.n + 1.0,\n        sum:  accumulator.sum + r._value,\n        sum2: accumulator.sum2 + r._value * r._value\n      }),\n      identity: {n: 0.0, sum: 0.0, sum2: 0.0}\n    )\n  |> map(fn: (r) => {\n      mean = r.sum / r.n\n      variance = r.sum2 / r.n - mean * mean\n      sigma = if variance > 0.0 then math.sqrt(x: variance) else 1.0e-9\n      cpu = (0.5 - mean) / (3.0 * sigma)\n      cpl = (mean - (-0.5)) / (3.0 * sigma)\n      cpk = if cpu < cpl then cpu else cpl\n      return {_value: cpk, _field: \"cpk\", _time: now()}\n    })"
         }
       ]
     },
