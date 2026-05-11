@@ -36,7 +36,26 @@
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "options": {
-        "seriesMapping": "auto",
+        "seriesMapping": "manual",
+        "series": [
+          { "x": "frequency_hz", "y": "VXG-GOOD-001" },
+          { "x": "frequency_hz", "y": "VXG-GOOD-002" },
+          { "x": "frequency_hz", "y": "VXG-GOOD-003" },
+          { "x": "frequency_hz", "y": "VXG-GOOD-004" },
+          { "x": "frequency_hz", "y": "VXG-GOOD-005" },
+          { "x": "frequency_hz", "y": "VXG-GOOD-006" },
+          { "x": "frequency_hz", "y": "VXG-MARGINAL-002" },
+          { "x": "frequency_hz", "y": "VXG-MARGINAL-004" },
+          { "x": "frequency_hz", "y": "VXG-MARGINAL-005" },
+          { "x": "frequency_hz", "y": "VXG-BAD-003" },
+          { "x": "frequency_hz", "y": "VXG-BAD-006" },
+          { "x": "frequency_hz", "y": "npi_upper",  "name": "NPI limit (dBm)" },
+          { "x": "frequency_hz", "y": "npi_lower",  "name": "NPI limit (lower)" },
+          { "x": "frequency_hz", "y": "spec_upper", "name": "M9484C warranted" },
+          { "x": "frequency_hz", "y": "spec_lower", "name": "M9484C warranted (lower)" },
+          { "x": "frequency_hz", "y": "typ_upper",  "name": "M9484C typical" },
+          { "x": "frequency_hz", "y": "typ_lower",  "name": "M9484C typical (lower)" }
+        ],
         "tooltip": { "mode": "multi", "sort": "none" },
         "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
       },
