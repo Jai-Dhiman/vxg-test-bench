@@ -2,31 +2,56 @@
   "uid": "vxg-npi",
   "title": "VXG Power Flatness — NPI Test Bench",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 5,
   "refresh": "10s",
   "time": { "from": "now-7d", "to": "now" },
   "timepicker": { "refresh_intervals": ["10s", "30s", "1m", "5m"] },
   "annotations": { "list": [] },
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "name": "nominal_dbm",
+        "label": "Nominal Power (dBm)",
+        "type": "constant",
+        "query": "0",
+        "current": { "selected": true, "text": "0", "value": "0" },
+        "hide": 0
+      },
+      {
+        "name": "tolerance_db",
+        "label": "NPI Tolerance (dB)",
+        "type": "constant",
+        "query": "0.5",
+        "current": { "selected": true, "text": "0.5", "value": "0.5" },
+        "hide": 0
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
       "type": "xychart",
-      "title": "Output Power vs Frequency (1–20 GHz) — all units",
-      "description": "Each line is one simulated unit under test. Tolerance band: ±0.5 dB. Units that dip below −0.5 dBm or spike above +0.5 dBm are failing.",
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "title": "Per-Unit Sweep — Output Power vs Frequency (every unit, full curve)",
+      "description": "Each colored line = ONE unit's full frequency sweep. PASS = curve stays inside the solid red NPI limits (nominal ± tolerance, dBm). FAIL = curve crosses outside. Dashed orange = M9484C warranted (datasheet: ALC on, CW, +22-28 °C, +15 dBm to -60 dBm column). Dotted green = M9484C typical. Bands are absolute dBm centered on the configured nominal.",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "options": {
-        "mapping": "auto",
+        "seriesMapping": "auto",
         "tooltip": { "mode": "multi", "sort": "none" },
         "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
       },
       "fieldConfig": {
         "defaults": {
           "unit": "dBm",
+          "color": { "mode": "palette-classic" },
           "custom": {
+            "axisLabel": "Power (dBm)",
             "lineWidth": 2,
-            "pointSize": 4,
+            "lineStyle": { "fill": "solid" },
+            "pointSize": 6,
+            "pointShape": "circle",
+            "show": "lines+points",
+            "showPoints": "always",
             "fillOpacity": 0,
             "hideFrom": { "legend": false, "tooltip": false, "viz": false }
           }
@@ -36,13 +61,75 @@
             "matcher": { "id": "byName", "options": "frequency_hz" },
             "properties": [
               { "id": "unit", "value": "hertz" },
-              { "id": "displayName", "value": "Frequency" }
+              { "id": "displayName", "value": "Frequency" },
+              { "id": "custom.axisLabel", "value": "Frequency" },
+              { "id": "decimals", "value": 0 }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "power_dbm" },
+            "matcher": { "id": "byName", "options": "npi_upper" },
             "properties": [
-              { "id": "displayName", "value": "Power (dBm)" }
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "solid" } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "NPI limit (dBm)" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "npi_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "solid" } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "spec_upper" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 6] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "M9484C warranted" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "spec_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 6] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "typ_upper" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+              { "id": "custom.lineWidth", "value": 1 },
+              { "id": "custom.lineStyle", "value": { "fill": "dot", "dash": [2, 4] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "M9484C typical" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "typ_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+              { "id": "custom.lineWidth", "value": 1 },
+              { "id": "custom.lineStyle", "value": { "fill": "dot", "dash": [2, 4] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
             ]
           }
         ]
@@ -51,22 +138,22 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and (r._field == \"power_dbm\" or r._field == \"frequency_hz\"))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"_time\", \"frequency_hz\", \"power_dbm\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> sort(columns: [\"frequency_hz\"])"
+          "query": "nominal = ${nominal_dbm}\ntol = ${tolerance_db}\n\nlatest = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatnessRun\" and r._field == \"verdict\")\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"_time\")\n  |> keep(columns: [\"unit_id\", \"run_id\"])\n  |> group()\n\npoints = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and (r._field == \"power_dbm\" or r._field == \"frequency_hz\"))\n  |> pivot(rowKey: [\"_time\", \"unit_id\", \"run_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"unit_id\", \"run_id\", \"frequency_hz\", \"power_dbm\"])\n\njoin(tables: {l: latest, p: points}, on: [\"unit_id\", \"run_id\"])\n  |> keep(columns: [\"unit_id\", \"frequency_hz\", \"power_dbm\"])\n  |> pivot(rowKey: [\"frequency_hz\"], columnKey: [\"unit_id\"], valueColumn: \"power_dbm\")\n  |> group()\n  |> map(fn: (r) => ({\n      r with\n      npi_upper: nominal + tol,\n      npi_lower: nominal - tol,\n      spec_upper:\n        if r.frequency_hz <= 6000000000.0 then nominal + 1.6\n        else if r.frequency_hz <= 8500000000.0 then nominal + 1.1\n        else if r.frequency_hz <= 17000000000.0 then nominal + 1.2\n        else if r.frequency_hz <= 20000000000.0 then nominal + 1.7\n        else if r.frequency_hz <= 44000000000.0 then nominal + 1.3\n        else if r.frequency_hz <= 50000000000.0 then nominal + 2.1\n        else nominal + 2.2,\n      spec_lower:\n        if r.frequency_hz <= 6000000000.0 then nominal - 1.6\n        else if r.frequency_hz <= 8500000000.0 then nominal - 1.1\n        else if r.frequency_hz <= 17000000000.0 then nominal - 1.2\n        else if r.frequency_hz <= 20000000000.0 then nominal - 1.7\n        else if r.frequency_hz <= 44000000000.0 then nominal - 1.3\n        else if r.frequency_hz <= 50000000000.0 then nominal - 2.1\n        else nominal - 2.2,\n      typ_upper:\n        if r.frequency_hz <= 17000000000.0 then nominal + 0.3\n        else if r.frequency_hz <= 20000000000.0 then nominal + 0.5\n        else if r.frequency_hz <= 44000000000.0 then nominal + 0.3\n        else nominal + 0.7,\n      typ_lower:\n        if r.frequency_hz <= 17000000000.0 then nominal - 0.3\n        else if r.frequency_hz <= 20000000000.0 then nominal - 0.5\n        else if r.frequency_hz <= 44000000000.0 then nominal - 0.3\n        else nominal - 0.7\n    }))\n  |> sort(columns: [\"frequency_hz\"])"
         }
       ]
     },
     {
       "id": 2,
       "type": "table",
-      "title": "Unit Yield — Pass / Fail per Unit",
-      "description": "55% yield shown here is realistic for a new product line in early NPI. Rows highlighted red have at least one out-of-spec frequency point.",
-      "gridPos": { "h": 10, "w": 14, "x": 0, "y": 12 },
+      "title": "Latest-Run Outcome per Unit",
+      "description": "Latest run per unit. Row is red if at least one frequency point fell outside the NPI tolerance band.",
+      "gridPos": { "h": 10, "w": 14, "x": 0, "y": 14 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {},
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "fail_count" },
+            "matcher": { "id": "byName", "options": "failed_point_count" },
             "properties": [
               {
                 "id": "thresholds",
@@ -80,15 +167,28 @@
               },
               { "id": "custom.displayMode", "value": "color-background" }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "verdict" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "true":  { "text": "PASS", "color": "green" } } },
+                  { "type": "value", "options": { "false": { "text": "FAIL", "color": "red"   } } }
+                ]
+              },
+              { "id": "custom.displayMode", "value": "color-text" }
+            ]
           }
         ]
       },
-      "options": { "sortBy": [{ "displayName": "fail_count", "desc": true }] },
+      "options": { "sortBy": [{ "displayName": "failed_point_count", "desc": true }] },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        pass_count: accumulator.pass_count + (if r._value == true then 1 else 0),\n        fail_count: accumulator.fail_count + (if r._value == false then 1 else 0)\n      }),\n      identity: {pass_count: 0, fail_count: 0}\n    )\n  |> group()"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatnessRun\" and (r._field == \"verdict\" or r._field == \"failed_point_count\" or r._field == \"point_count\"))\n  |> pivot(rowKey: [\"_time\", \"unit_id\", \"run_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"_time\")\n  |> keep(columns: [\"unit_id\", \"run_id\", \"verdict\", \"failed_point_count\", \"point_count\"])\n  |> group()\n  |> sort(columns: [\"failed_point_count\"], desc: true)"
         }
       ]
     },
@@ -96,8 +196,8 @@
       "id": 3,
       "type": "stat",
       "title": "Production Yield",
-      "description": "% of units with zero out-of-spec points across the full sweep.",
-      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 12 },
+      "description": "% of units whose latest run was PASS (verdict=true, zero out-of-spec points).",
+      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 14 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {
@@ -125,7 +225,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> group()\n  |> map(fn: (r) => ({_value: if r.any_fail == false then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatnessRun\" and r._field == \"verdict\")\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"_time\")\n  |> group()\n  |> map(fn: (r) => ({_value: if r._value then 1.0 else 0.0, _time: now()}))\n  |> mean()\n  |> map(fn: (r) => ({_value: r._value * 100.0, _field: \"yield_pct\", _time: now()}))"
         }
       ]
     },
@@ -133,8 +233,8 @@
       "id": 4,
       "type": "stat",
       "title": "Failing Units",
-      "description": "Number of units with at least one out-of-spec frequency point in this 7-day window.",
-      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 17 },
+      "description": "Number of units whose latest run was FAIL.",
+      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 19 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] } },
@@ -151,27 +251,27 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"pass\")\n  |> keep(columns: [\"_time\", \"_value\", \"unit_id\"])\n  |> group(columns: [\"unit_id\"])\n  |> reduce(\n      fn: (r, accumulator) => ({any_fail: accumulator.any_fail or (r._value == false)}),\n      identity: {any_fail: false}\n    )\n  |> map(fn: (r) => ({_value: if r.any_fail then 1 else 0, _time: now()}))\n  |> group()\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
+          "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatnessRun\" and r._field == \"verdict\")\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"_time\")\n  |> group()\n  |> map(fn: (r) => ({_value: if r._value then 0 else 1, _time: now()}))\n  |> sum(column: \"_value\")\n  |> map(fn: (r) => ({_value: r._value, _field: \"failing_units\", _time: now()}))"
         }
       ]
     },
     {
       "id": 5,
       "type": "stat",
-      "title": "Process Capability (Cpk)",
-      "description": "Cpk = min((USL−μ)/(3σ), (μ−LSL)/(3σ)). USL=+0.5 dBm, LSL=−0.5 dBm. Target ≥1.33 (4-sigma process). Values below 1.0 mean the process cannot hold tolerance.",
-      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 22 },
+      "title": "Worst-Case Deviation",
+      "description": "Largest |measured - nominal| observed across all units and frequencies in the window. > tolerance ⇒ at least one unit failed NPI; > 1.7 dB ⇒ outside the worst M9484C warranted band (17-20 GHz).",
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 24 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "dB",
           "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red",    "value": null },
-              { "color": "yellow", "value": 1.0  },
-              { "color": "green",  "value": 1.33 }
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 0.5  },
+              { "color": "red",    "value": 1.7  }
             ]
           },
           "mappings": []
@@ -189,7 +289,7 @@
         {
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "usl = 0.5\nlsl = -0.5\n\nbase = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> group()\n\nmean_t   = base |> mean()   |> map(fn: (r) => ({_value: r._value, stat: \"mean\"}))\nstddev_t = base |> stddev() |> map(fn: (r) => ({_value: r._value, stat: \"sigma\"}))\n\nunion(tables: [mean_t, stddev_t])\n  |> pivot(rowKey: [], columnKey: [\"stat\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      _time: now(),\n      _field: \"cpk\",\n      _value:\n        if r.sigma <= 0.0 then 0.0\n        else if (usl - r.mean) / (3.0 * r.sigma) < (r.mean - lsl) / (3.0 * r.sigma)\n          then (usl - r.mean) / (3.0 * r.sigma)\n          else (r.mean - lsl) / (3.0 * r.sigma)\n    }))\n  |> yield(name: \"cpk\")"
+          "query": "import \"math\"\nnominal = ${nominal_dbm}\n\nfrom(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and r._field == \"power_dbm\")\n  |> map(fn: (r) => ({r with _value: math.abs(x: r._value - nominal)}))\n  |> group()\n  |> max()\n  |> map(fn: (r) => ({_value: r._value, _field: \"worst_dev_db\", _time: now()}))"
         }
       ]
     },
@@ -198,7 +298,7 @@
       "type": "table",
       "title": "Anomaly Detection — Latest Run",
       "description": "IsolationForest on unit power curves. Negative score = more anomalous. is_anomaly=true flags units whose full frequency response deviates from the fleet.",
-      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 22 },
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 24 },
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {},
@@ -227,6 +327,132 @@
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "influxdb" },
           "query": "from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerAnomalies\")\n  |> pivot(rowKey: [\"_time\", \"unit_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"_time\", \"unit_id\", \"anomaly_score\", \"is_anomaly\"])\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"anomaly_score\")\n  |> group()\n  |> sort(columns: [\"anomaly_score\"], desc: false)"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "xychart",
+      "title": "Fleet Statistics — min / mean / max ACROSS units, per frequency (latest run per unit)",
+      "description": "Envelope across the latest run per unit. At each frequency: min = worst unit, max = best unit, mean = fleet average. Bands as in Panel 1 (M9484C warranted/typical, datasheet ALC-on CW). Compare to the per-unit view above to find offending units.",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 32 },
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "options": {
+        "seriesMapping": "manual",
+        "series": [
+          { "x": "frequency_hz", "y": "min_dbm",    "name": "Fleet min" },
+          { "x": "frequency_hz", "y": "mean_dbm",   "name": "Fleet mean" },
+          { "x": "frequency_hz", "y": "max_dbm",    "name": "Fleet max" },
+          { "x": "frequency_hz", "y": "npi_upper",  "name": "NPI limit (dBm)" },
+          { "x": "frequency_hz", "y": "npi_lower",  "name": "NPI limit (lower)" },
+          { "x": "frequency_hz", "y": "spec_upper", "name": "M9484C warranted" },
+          { "x": "frequency_hz", "y": "spec_lower", "name": "M9484C warranted (lower)" },
+          { "x": "frequency_hz", "y": "typ_upper",  "name": "M9484C typical" },
+          { "x": "frequency_hz", "y": "typ_lower",  "name": "M9484C typical (lower)" }
+        ],
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dBm",
+          "custom": {
+            "axisLabel": "Power (dBm)",
+            "lineWidth": 2,
+            "lineStyle": { "fill": "solid" },
+            "pointSize": 6,
+            "pointShape": "circle",
+            "show": "lines+points",
+            "showPoints": "always",
+            "fillOpacity": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "frequency_hz" },
+            "properties": [
+              { "id": "unit", "value": "hertz" },
+              { "id": "displayName", "value": "Frequency" },
+              { "id": "custom.axisLabel", "value": "Frequency" },
+              { "id": "decimals", "value": 0 }
+            ]
+          },
+          { "matcher": { "id": "byName", "options": "min_dbm" },  "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red"   } }, { "id": "displayName", "value": "Fleet min" }] },
+          { "matcher": { "id": "byName", "options": "mean_dbm" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue"  } }, { "id": "displayName", "value": "Fleet mean" }] },
+          { "matcher": { "id": "byName", "options": "max_dbm" },  "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }, { "id": "displayName", "value": "Fleet max" }] },
+          {
+            "matcher": { "id": "byName", "options": "npi_upper" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "solid" } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "NPI limit (dBm)" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "npi_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "solid" } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "spec_upper" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 6] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "M9484C warranted" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "spec_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 6] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "typ_upper" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+              { "id": "custom.lineWidth", "value": 1 },
+              { "id": "custom.lineStyle", "value": { "fill": "dot", "dash": [2, 4] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "displayName", "value": "M9484C typical" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "typ_lower" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+              { "id": "custom.lineWidth", "value": 1 },
+              { "id": "custom.lineStyle", "value": { "fill": "dot", "dash": [2, 4] } },
+              { "id": "custom.pointSize", "value": 0 },
+              { "id": "custom.show", "value": "lines" },
+              { "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "nominal = ${nominal_dbm}\ntol = ${tolerance_db}\n\nlatest = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatnessRun\" and r._field == \"verdict\")\n  |> group(columns: [\"unit_id\"])\n  |> last(column: \"_time\")\n  |> keep(columns: [\"unit_id\", \"run_id\"])\n  |> group()\n\npoints = from(bucket: \"vxg_tests\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"PowerFlatness\" and (r._field == \"power_dbm\" or r._field == \"frequency_hz\"))\n  |> pivot(rowKey: [\"_time\", \"unit_id\", \"run_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"unit_id\", \"run_id\", \"frequency_hz\", \"power_dbm\"])\n\njoin(tables: {l: latest, p: points}, on: [\"unit_id\", \"run_id\"])\n  |> keep(columns: [\"frequency_hz\", \"power_dbm\"])\n  |> group(columns: [\"frequency_hz\"])\n  |> reduce(\n      fn: (r, accumulator) => ({\n        mn:  if r.power_dbm < accumulator.mn then r.power_dbm else accumulator.mn,\n        mx:  if r.power_dbm > accumulator.mx then r.power_dbm else accumulator.mx,\n        sum: accumulator.sum + r.power_dbm,\n        n:   accumulator.n + 1.0\n      }),\n      identity: {mn: 1000.0, mx: -1000.0, sum: 0.0, n: 0.0}\n    )\n  |> map(fn: (r) => ({\n      frequency_hz: r.frequency_hz,\n      min_dbm:  r.mn,\n      max_dbm:  r.mx,\n      mean_dbm: r.sum / r.n,\n      npi_upper: nominal + tol,\n      npi_lower: nominal - tol,\n      spec_upper:\n        if r.frequency_hz <= 6000000000.0 then nominal + 1.6\n        else if r.frequency_hz <= 8500000000.0 then nominal + 1.1\n        else if r.frequency_hz <= 17000000000.0 then nominal + 1.2\n        else if r.frequency_hz <= 20000000000.0 then nominal + 1.7\n        else if r.frequency_hz <= 44000000000.0 then nominal + 1.3\n        else if r.frequency_hz <= 50000000000.0 then nominal + 2.1\n        else nominal + 2.2,\n      spec_lower:\n        if r.frequency_hz <= 6000000000.0 then nominal - 1.6\n        else if r.frequency_hz <= 8500000000.0 then nominal - 1.1\n        else if r.frequency_hz <= 17000000000.0 then nominal - 1.2\n        else if r.frequency_hz <= 20000000000.0 then nominal - 1.7\n        else if r.frequency_hz <= 44000000000.0 then nominal - 1.3\n        else if r.frequency_hz <= 50000000000.0 then nominal - 2.1\n        else nominal - 2.2,\n      typ_upper:\n        if r.frequency_hz <= 17000000000.0 then nominal + 0.3\n        else if r.frequency_hz <= 20000000000.0 then nominal + 0.5\n        else if r.frequency_hz <= 44000000000.0 then nominal + 0.3\n        else nominal + 0.7,\n      typ_lower:\n        if r.frequency_hz <= 17000000000.0 then nominal - 0.3\n        else if r.frequency_hz <= 20000000000.0 then nominal - 0.5\n        else if r.frequency_hz <= 44000000000.0 then nominal - 0.3\n        else nominal - 0.7\n    }))\n  |> group()\n  |> sort(columns: [\"frequency_hz\"])"
         }
       ]
     }

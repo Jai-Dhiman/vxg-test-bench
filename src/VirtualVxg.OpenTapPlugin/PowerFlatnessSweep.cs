@@ -19,6 +19,7 @@ public class PowerFlatnessSweep : TestStep
 
     public override void Run()
     {
+        var runId = Guid.NewGuid().ToString("N");
         Instrument.SetPower(NominalPowerDbm);
         Instrument.EnableOutput();
         var failed = 0;
@@ -37,18 +38,38 @@ public class PowerFlatnessSweep : TestStep
             passColumn.Add(pass);
         }
 
+        var n = freqColumn.Count;
         Results?.PublishTable("PowerFlatness",
-            new List<string> { "unit_id", "frequency_hz", "power_dbm", "pass" },
+            new List<string> { "unit_id", "run_id", "frequency_hz", "power_dbm", "pass", "nominal_dbm", "tolerance_db" },
             new Array[]
             {
-                Enumerable.Repeat(UnitId, freqColumn.Count).ToArray(),
+                Enumerable.Repeat(UnitId, n).ToArray(),
+                Enumerable.Repeat(runId, n).ToArray(),
                 freqColumn.ToArray(),
                 powerColumn.ToArray(),
-                passColumn.ToArray()
+                passColumn.ToArray(),
+                Enumerable.Repeat(NominalPowerDbm, n).ToArray(),
+                Enumerable.Repeat(ToleranceDb, n).ToArray()
             });
 
         FailedPointCount = failed;
         LastVerdict = failed == 0 ? Verdict.Pass : Verdict.Fail;
+
+        Results?.PublishTable("PowerFlatnessRun",
+            new List<string> { "unit_id", "run_id", "verdict", "failed_point_count", "point_count", "nominal_dbm", "tolerance_db", "start_freq_hz", "stop_freq_hz" },
+            new Array[]
+            {
+                new[] { UnitId },
+                new[] { runId },
+                new[] { failed == 0 },
+                new[] { failed },
+                new[] { n },
+                new[] { NominalPowerDbm },
+                new[] { ToleranceDb },
+                new[] { StartFreqHz },
+                new[] { StopFreqHz }
+            });
+
         UpgradeVerdict(LastVerdict);
     }
 }
